@@ -15,3 +15,12 @@ PHOTO 1:
 
 **Why the total number of queue is as such?**
 Kuantitas akumulasi antrean merepresentasikan defisit antara beban trafik *publisher* dan *throughput* komputasi *subscriber*. Total 15 antrean mengindikasikan *publisher* dieksekusi 3 repetisi (3 *run* x 5 *event* = 15 *event*). Di sisi penerima, injeksi kode `thread::sleep(ten_millis)` memblokir *thread* pemrosesan sistem secara konstan selama 1 detik per eksekusi. RabbitMQ bertindak sebagai kompensator arsitektural dengan menahan (*buffering*) pesan tersebut di dalam *queue* untuk mencegah *data loss* atau *crash* akibat *subscriber* yang mengalami malfungsi kecepatan.
+
+PHOTO 2:
+![Photo2](photo/photo2.png)
+
+**Reflection on Queue Reduction:**
+Aktivasi tiga instans *subscriber* secara konkuren menekan laju akumulasi pesan secara drastis. Arsitektur pemrosesan ini mendemonstrasikan pola **Competing Consumers**. RabbitMQ mengeksekusi mekanisme algoritma *Round-Robin dispatching*, yang secara otomatis mendistribusikan muatan pesan secara bergilir kepada seluruh koneksi TCP *subscriber* yang terikat ke antrean *user_created*. Integrasi horizontal ini meningkatkan skala pemrosesan komputasi (*horizontal scaling*), mengubah resolusi operasional dari serial menjadi agregat paralel asinkron, sehingga *bottleneck* terselesaikan tanpa optimalisasi kode di sisi aplikasi pekerja tunggal.
+
+**Code Improvement Suggestions:**
+Berdasarkan tinjauan arsitektural, implementasi saat ini menggunakan parameter *hardcode* dan mekanisme eksekusi panik (*panic-on-error*) yang tidak valid untuk lingkungan tingkat produksi. Modifikasi perlu dilakukan di sisi inisialisasi koneksi.
